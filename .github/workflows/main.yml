@@ -1,0 +1,54 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install numpy scipy matplotlib pandas tensorflow PyQt5 h5py
+    
+    - name: Build Windows EXE
+      run: |
+        pyinstaller --onefile --windowed ^
+          --add-data "ct_model.keras;." ^
+          --add-data "sample_ct_test.mat;." ^
+          --hidden-import=tensorflow ^
+          --hidden-import=tensorflow.keras ^
+          --hidden-import=tensorflow.keras.models ^
+          --hidden-import=PyQt5 ^
+          --hidden-import=PyQt5.QtCore ^
+          --hidden-import=PyQt5.QtWidgets ^
+          --hidden-import=PyQt5.QtGui ^
+          --hidden-import=matplotlib ^
+          --hidden-import=matplotlib.backends.backend_qt5agg ^
+          --hidden-import=numpy ^
+          --hidden-import=scipy ^
+          --hidden-import=scipy.io ^
+          --hidden-import=scipy.optimize ^
+          --hidden-import=pandas ^
+          --name="WaveformAnalysis" ^
+          "waveform_analysis(2).py"
+    
+    - name: Upload EXE artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: WaveformAnalysis-Windows-EXE
+        path: dist/WaveformAnalysis.exe 
